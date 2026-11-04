@@ -1,0 +1,46 @@
+plugins { id 'java' }
+
+repositories {
+    if (providers.gradleProperty('architectureRulesRepository').isPresent()) {
+        maven {
+            url = uri(providers.gradleProperty('architectureRulesRepository').get())
+            content { includeModule 'io.github.lambig', 'ab-architecture-rules' }
+            metadataSources { mavenPom(); ignoreGradleMetadataRedirection() }
+        }
+    }
+    mavenCentral()
+}
+
+def scenario = providers.gradleProperty('scenario').getOrElse('allowed')
+if (!(scenario in ['allowed', 'direct', 'reference', 'fixed'])) {
+    throw new GradleException("Unknown scenario: ${scenario}")
+}
+sourceSets.main.java.srcDir("src/scenarios/${scenario}/java")
+
+dependencies {
+    testImplementation "io.github.lambig:ab-architecture-rules:${providers.gradleProperty('rulesVersion').getOrElse('0.1.0')}"
+    testImplementation 'junit:junit:4.13.2'
+}
+tasks.withType(JavaCompile).configureEach {
+    options.release = 8
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('test') {
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+    if (providers.gradleProperty('boundaryJavaHome').isPresent()) {
+        executable = file(providers.gradleProperty('boundaryJavaHome').get() + '/bin/java')
+    }
+}
+
+tasks.register('verifyRuntimeIsolation') {
+    doLast {
+        if (!configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.empty) {
+            throw new GradleException('The example application must have no library runtime dependencies')
+        }
+    }
+}
+tasks.named('check') { dependsOn 'verifyRuntimeIsolation' }

@@ -1,0 +1,89 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+group = 'io.github.lambig'
+version = '0.1.0'
+
+repositories { mavenCentral() }
+
+dependencies {
+    api 'com.tngtech.archunit:archunit:1.5.0'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+    withJavadocJar()
+}
+tasks.withType(JavaCompile).configureEach {
+    options.release = 8
+    options.encoding = 'UTF-8'
+}
+tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8' }
+tasks.withType(Jar).configureEach { from('LICENSE') { into 'META-INF' } }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'ab-architecture-rules'
+                description = 'Explicitly adopted AB architecture constraints implemented as ArchUnit rules.'
+                url = 'https://github.com/lambig/ab-architecture-rules'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers { developer { id = 'lambig'; name = 'Lambig' } }
+                scm {
+                    connection = 'scm:git:https://github.com/lambig/ab-architecture-rules.git'
+                    developerConnection = 'scm:git:ssh://git@github.com/lambig/ab-architecture-rules.git'
+                    url = 'https://github.com/lambig/ab-architecture-rules'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'Candidate'
+            url = layout.buildDirectory.dir('repository')
+        }
+    }
+}
+
+// 署名鍵は公開用bundleの生成時だけ環境から受け取る。
+def releaseBundle = providers.gradleProperty('releaseBundle').isPresent()
+signing {
+    required = releaseBundle
+    if (releaseBundle) {
+        if (providers.environmentVariable('SIGNING_KEY').isPresent()) {
+            useInMemoryPgpKeys(providers.environmentVariable('SIGNING_KEY').get(),
+                    providers.environmentVariable('SIGNING_PASSWORD').orNull)
+        }
+        sign publishing.publications.mavenJava
+    }
+}
+
+tasks.register('centralBundle', Zip) {
+    dependsOn 'publishMavenJavaPublicationToCandidateRepository'
+    archiveFileName = "${project.name}-${project.version}-central.zip"
+    destinationDirectory = layout.buildDirectory.dir('central')
+    from(layout.buildDirectory.dir('repository')) {
+        include "io/github/lambig/${project.name}/${project.version}/*.jar*"
+        include "io/github/lambig/${project.name}/${project.version}/*.pom*"
+    }
+    doFirst {
+        if (!releaseBundle) throw new GradleException('centralBundle requires -PreleaseBundle and signing credentials')
+        ['.jar', '-sources.jar', '-javadoc.jar', '.pom'].each { suffix ->
+            def signature = layout.buildDirectory.file("repository/io/github/lambig/${project.name}/${project.version}/${project.name}-${project.version}${suffix}.asc").get().asFile
+            if (!signature.isFile()) throw new GradleException("Missing signature: ${signature.name}")
+        }
+    }
+}
