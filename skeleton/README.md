@@ -26,7 +26,9 @@ sh gradlew --no-daemon --console=plain clean check run
 wrapper、`gradle.properties` のtoolbox 0.4.0とHarness 0.1.0、JUnitの版は固定されています。
 ローカルMavenや候補リポジトリを使用せず、Maven Centralから解決します。
 
-正常時は `H1 boundary passed` と `dispatch: ready` が表示されます。生成したCIも同じ `clean check run` を実行します。
+正常時は `H1 boundary passed` と `dispatch: ready` が表示されます。
+生成したCIはJDK 17でbuildし、`-PruntimeJavaHome` にJava 11の場所を指定して `clean check run` を実行します。
+依存更新後も、テストとアプリケーションを最低対応Javaで実行できることを確認します。
 Harness・ArchUnit・JUnitはテスト依存だけで、アプリケーションのruntimeに含まれないことを `check` で確認します。
 業務型・注釈・packageは利用側の `example.shipping` にあります。自分のpackageへ移す場合は検査のimport範囲も合わせてください。
 

@@ -8,14 +8,14 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: corretto
           java-version: '8'
       - name: Remember test JVM
         run: echo "BOUNDARY_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: corretto
           java-version: '17'
@@ -38,14 +38,14 @@ jobs:
       matrix:
         java: ['11', '25']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: corretto
           java-version: ${{ matrix.java }}
       - name: Remember application JVM
         run: echo "BOUNDARY_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: corretto
           java-version: '17'
