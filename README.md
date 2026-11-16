@@ -23,7 +23,8 @@ ABServiceの業務型・注釈・package・設定には依存しません。
 ソースのビルドにはJDK 17以上、固定Gradle wrapper 9.7.1を使います。例のMaven操作はMaven 3.6.3以上を対象とします。
 
 座標は `io.github.lambig:ab-architecture-rules:0.1.0` です。
-初回公開が完了するまではMaven Centralから取得できません。その間のソース検証には後述の候補版手順を使ってください。
+[公開版0.1.0](https://repo.maven.apache.org/maven2/io/github/lambig/ab-architecture-rules/0.1.0/)をMaven Centralから取得できます。
+この公開版のソースは[a38d2b0](https://github.com/lambig/ab-architecture-rules/tree/a38d2b0b1b9ab7463b43b62d0b8115cdae5d9101)です。ソース変更の検証には後述の候補版手順を使います。
 
 Gradleでは次のように直接参照します。
 
@@ -122,7 +123,7 @@ BOUNDARY_JAVA_HOME=/path/to/jdk8 sh verify-example.sh
 
 ## 公開版の取得と更新
 
-固定版の公開後は `sh verify-example.sh public` でMaven Centralから取得して同じ一連操作を実行します。
+公開版は `sh verify-example.sh public` でMaven Centralから取得して同じ一連操作を実行します。
 候補リポジトリを指定せず、MavenとGradleの両方に新しいキャッシュを使います。
 
 更新では利用側の依存版を変更し、許容→直接呼出しの違反→参照の違反→修正の検証と、利用側の回帰試験を再実行します。
