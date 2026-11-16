@@ -132,3 +132,5 @@ BOUNDARY_JAVA_HOME=/path/to/jdk8 sh verify-example.sh
 
 ソースの修正から公開までの手順は[RELEASING.md](RELEASING.md)、不具合・提案は[Issues](https://github.com/lambig/ab-architecture-rules/issues)へ。
 ArchUnitのimportと規則の基本は[公式ガイド](https://www.archunit.org/userguide/html/000_Index.html)を参照してください。
+
+toolboxを通常依存として利用し、Harnessをテスト依存へ分ける初期構成は[Skeletonの導入・受け入れ手順](skeleton/README.md)を参照してください。

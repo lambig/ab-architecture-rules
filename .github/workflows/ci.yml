@@ -30,3 +30,30 @@ jobs:
             build/reports/tests/
             build/consumer-results/
           if-no-files-found: error
+  skeleton:
+    name: Public Skeleton on Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['11', '25']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: ${{ matrix.java }}
+      - name: Remember application JVM
+        run: echo "BOUNDARY_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '17'
+      - name: Verify exported project, boundary failures, repair and dependency update
+        run: python3 skeleton/verify.py --source "$(git rev-parse HEAD)" --results build/skeleton-results
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: skeleton-java-${{ matrix.java }}
+          path: build/skeleton-results/
+          if-no-files-found: error
