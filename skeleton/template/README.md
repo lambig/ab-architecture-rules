@@ -5,6 +5,10 @@
 CIはJDK 17でbuildし、`-PruntimeJavaHome` でJava 11を指定してテストと通常起動を検査します。
 ローカルでも同じ条件で確認する場合は、このプロパティにJava 11のインストール先を指定してください。
 
+CIはテスト成功時・失敗時のJUnit XMLとHTMLレポートを、実行対象SHAと再実行番号を含む `boundary-test-results-*` 成果物として14日間保存します。
+Actionsの実行画面から取得し、違反の診断を確認できます。レポート保存は失敗を成功へ変えません。
+コンパイルや依存取得で失敗してXMLが生成されない場合、または実行をキャンセルした場合は保存しません。実行ログで原因を確認してください。
+
 toolboxは通常依存、ab-architecture-rules・ArchUnit・JUnitはテスト依存です。版は `gradle.properties` に固定しています。
 規則は専用遷移の直接呼出し・メソッド参照を操作内に限定します。注釈漏れ・import範囲外・reflection・業務順序は保証しません。
 自分のpackageへ移す場合は `BoundaryCheck` のimport範囲を更新してください。
