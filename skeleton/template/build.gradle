@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories { mavenCentral() }
+dependencies {
+    implementation "io.github.lambig:toolbox-java:${toolboxVersion}"
+    testImplementation "io.github.lambig:ab-architecture-rules:${rulesVersion}"
+    testImplementation 'junit:junit:4.13.2'
+}
+tasks.withType(JavaCompile).configureEach {
+    options.release = 11
+    options.encoding = 'UTF-8'
+}
+application { mainClass = 'example.shipping.Main' }
+tasks.withType(JavaExec).configureEach {
+    if (providers.gradleProperty('runtimeJavaHome').isPresent()) {
+        executable = file(providers.gradleProperty('runtimeJavaHome').get() + '/bin/java')
+    }
+}
+tasks.named('test') {
+    testLogging { showStandardStreams = true; exceptionFormat = 'full' }
+    if (providers.gradleProperty('runtimeJavaHome').isPresent()) {
+        executable = file(providers.gradleProperty('runtimeJavaHome').get() + '/bin/java')
+    }
+}
+tasks.register('verifyRuntimeIsolation') {
+    doLast {
+        def artifacts = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts
+        if (artifacts.any { it.moduleVersion.id.group == 'com.tngtech.archunit' ||
+                it.moduleVersion.id.name == 'ab-architecture-rules' ||
+                it.moduleVersion.id.group == 'junit' }) {
+            throw new GradleException('Harness and test frameworks must not be runtime dependencies')
+        }
+    }
+}
+tasks.named('check') { dependsOn 'verifyRuntimeIsolation' }
