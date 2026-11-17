@@ -3,9 +3,11 @@ import argparse
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--source', required=True)
@@ -28,14 +30,32 @@ with tempfile.TemporaryDirectory(prefix='skeleton-') as temporary:
         completed = subprocess.run(command, cwd=project, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = completed.stdout.decode('utf-8', errors='replace')
         (args.results / (stage + '.log')).write_text(output, encoding='utf-8')
+        reports = sorted((project / 'build/test-results/test').glob('*.xml'))
+        assert reports, stage + ' produced no JUnit XML; inspect log'
+        report_dir = args.results / stage
+        (report_dir / 'test-results').mkdir(parents=True, exist_ok=True)
+        for report in reports:
+            shutil.copy2(report, report_dir / 'test-results' / report.name)
+        shutil.copytree(project / 'build/reports/tests/test', report_dir / 'html', dirs_exist_ok=True)
+        suites = [ET.parse(report).getroot() for report in reports]
+        counts = {key: sum(int(suite.get(key, '0')) for suite in suites)
+                  for key in ['tests', 'failures', 'errors', 'skipped']}
+        assert counts['tests'] > 0 and counts['errors'] == 0 and counts['skipped'] == 0, (stage, counts)
         if rejected:
             assert completed.returncode != 0, stage + ' unexpectedly passed'
+            assert counts['failures'] > 0, stage + ' has no failed test in XML'
+            failures = '\n'.join(node.text or '' for suite in suites for node in suite.iter('failure'))
             for expected in ['expected caller class', 'example.shipping.Client', 'Shipment.dispatch']:
                 assert expected in output, stage + ' failed for an unrelated reason: ' + expected
+                assert expected in failures, stage + ' XML lacks boundary diagnosis: ' + expected
+            access_kind = 'calls method' if stage == 'direct' else 'references method'
+            assert access_kind in failures, stage + ' XML lacks ' + access_kind
         else:
             assert completed.returncode == 0, stage + ' failed; inspect log'
             assert 'H1 boundary passed' in output and 'dispatch: ready' in output
-        results.append({'stage': stage, 'exitCode': completed.returncode, 'expectedRejection': rejected})
+            assert counts['failures'] == 0, stage + ' has failed tests in XML'
+        results.append({'stage': stage, 'exitCode': completed.returncode, 'expectedRejection': rejected,
+                        'junit': counts, 'reports': stage + '/'})
         print(stage + (': expected boundary rejection' if rejected else ': passed'), flush=True)
     run('allowed')
     client = project / 'src/main/java/example/shipping/Client.java'
