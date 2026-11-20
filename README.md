@@ -20,7 +20,7 @@ ABServiceの業務型・注釈・package・設定には依存しません。
 
 ライブラリと検査実行の最低Javaは8、依存するArchUnitは1.5.0です。公開APIにArchUnitの型が現れるため、POMのcompile依存から解決します。
 ライブラリ本体はJUnitに依存しません。以下の例はJUnit 4を利用しますが、別のテスト基盤からも同じ規則を実行できます。
-ソースのビルドにはJDK 17以上、固定Gradle wrapper 9.7.1を使います。例のMaven操作はMaven 3.6.3以上を対象とします。
+ソースのビルドにはJDK 17以上、固定Gradle wrapper 9.9.1を使います。例のMaven操作はMaven 3.6.3以上を対象とします。
 
 座標は `io.github.lambig:ab-architecture-rules:0.1.0` です。
 [公開版0.1.0](https://repo.maven.apache.org/maven2/io/github/lambig/ab-architecture-rules/0.1.0/)をMaven Centralから取得できます。
